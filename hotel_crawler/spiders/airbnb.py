@@ -19,9 +19,10 @@ class Airbnb(scrapy.Spider):
     currency = "CNY"
     locale = "zh"
     cdn_cn = "1"
-    api_key = "d306zoyjsyarp7ifhu67rjxn52tv0t20"
-
-    # api_key = "915pw2pnf4h1aiguhph5gc5b2"
+    #api_key = "d306zoyjsyarp7ifhu67rjxn52tv0t20"
+    max_query_page = 25
+    api_key = "915pw2pnf4h1aiguhph5gc5b2"
+    custom_settings = {'LOG_FILE': "airbnb-" + time.strftime('%Y-%m-%d', time.localtime(time.time())) + ".log"}
 
     def __init__(self, start=None, end=None, city=None, *args, **kwargs):
         super(Airbnb, self).__init__(*args, **kwargs)
@@ -71,7 +72,7 @@ class Airbnb(scrapy.Spider):
         current_offset = response.meta['current_offset']
 
         # 加载json数据
-        jsonObj = json.loads(response.body)
+        jsonObj = json.loads(response.body.decode("utf-8"))
         # 获取房间列表
 
         listings = jsonObj['explore_tabs'][0]['sections'][0]['listings']
@@ -129,7 +130,7 @@ class Airbnb(scrapy.Spider):
         has_next_page = jsonObj['explore_tabs'][0]['pagination_metadata']['has_next_page']
         # 下一页
         next_page_offset = int(current_offset) + 1
-        if next_page_offset < 19:
+        if next_page_offset < self.max_query_page:
             yield scrapy.Request(
                 url=self.format_url(city_cn_name, str(next_page_offset)),
                 callback=self.parse,
@@ -174,7 +175,7 @@ class Airbnb(scrapy.Spider):
     # 从详情接口中获取数据
     def page_detail(self, response):
         item = response.meta['item']
-        detail_json = json.loads(response.body)
+        detail_json = json.loads(response.body.decode("utf-8"))
         if detail_json['pdp_listing_booking_details'][0]['base_price_breakdown']:
             item['price'] = float(detail_json['pdp_listing_booking_details'][0]['base_price_breakdown'][0]['amount'])
 
@@ -291,7 +292,7 @@ class Airbnb(scrapy.Spider):
     # 解析日历数据
     def parse_calendar_data(self, response):
         item = response.meta['item']
-        calendar_data = json.loads(response.body)
+        calendar_data = json.loads(response.body.decode("utf-8"))
         item['reserve_situation'] = self.calc_available_count(calendar_data)
 
         yield item

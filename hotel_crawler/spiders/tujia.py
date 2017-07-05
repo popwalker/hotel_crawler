@@ -11,21 +11,34 @@ class Tujia(scrapy.Spider):
     base_url = "https://www.tujia.com/"
     start_date = "2017-07-02"
     end_date = "2017-07-31"
+    city = ''
+    custom_settings = {'LOG_FILE': "tujia-" + time.strftime('%Y-%m-%d', time.localtime(time.time())) + ".log"}
 
-    def __init__(self, start=None, end=None, *args, **kwargs):
+    def __init__(self, start=None, end=None, city=None, *args, **kwargs):
         super(Tujia, self).__init__(*args, **kwargs)
         self.start_date = start
         self.end_date = end
+        self.city = city
 
     def start_requests(self):
         settings = get_project_settings()
         city_list = settings["CITY_LIST"]
-        for city_en_name, city_cn_name in city_list.items():
+
+        if self.city:
+            city_cn_name = city_list.get(self.city)
             yield scrapy.FormRequest(
-                url=self.base_url + city_en_name + "_gongyu",
+                url=self.base_url + self.city + "_gongyu",
                 formdata={"startDate": self.start_date, "endDate": self.end_date},
                 callback=self.parse,
-                meta={'city_en_name': city_en_name, "city_cn_name": city_cn_name}
+                meta={'city_en_name': self.city, "city_cn_name": city_cn_name}
+            )
+        else:
+            for city_en_name, city_cn_name in city_list.items():
+                yield scrapy.FormRequest(
+                    url=self.base_url + city_en_name + "_gongyu",
+                    formdata={"startDate": self.start_date, "endDate": self.end_date},
+                    callback=self.parse,
+                    meta={'city_en_name': city_en_name, "city_cn_name": city_cn_name}
             )
 
     def parse(self, response):
