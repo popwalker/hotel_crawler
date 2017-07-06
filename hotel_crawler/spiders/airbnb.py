@@ -20,7 +20,7 @@ class Airbnb(scrapy.Spider):
     locale = "zh"
     cdn_cn = "1"
     #api_key = "d306zoyjsyarp7ifhu67rjxn52tv0t20"
-    max_query_page = 25
+    max_query_page = 30
     api_key = "915pw2pnf4h1aiguhph5gc5b2"
     custom_settings = {'LOG_FILE': "airbnb-" + time.strftime('%Y-%m-%d', time.localtime(time.time())) + ".log"}
 
@@ -210,7 +210,7 @@ class Airbnb(scrapy.Spider):
         # 尝试重新解析价格
         raw_price_items = detail_json['pdp_listing_booking_details'][0]["price_excluding_fees"]['price_items']
         for raw_price_item in raw_price_items:
-            if not item['price'] and raw_price_item['type'] == 'ACCOMMODATION':
+            if not item.get('price') and raw_price_item['type'] == 'ACCOMMODATION':
                 raw_price = re.search(r"([0-9.,]+)", raw_price_item['localized_title'])
                 if raw_price:
                     item['price'] = float(raw_price.group(1))
