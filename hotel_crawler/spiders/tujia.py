@@ -131,7 +131,7 @@ class Tujia(scrapy.Spider):
 
         item['bed_count'] = re.search(r"([0-9.,]+)", room_tag_dict.get('icon-bed')).group(1)
         item['prefered_guests_count'] = re.search(r"([0-9.,]+)", room_tag_dict.get('icon-guests')).group(1)
-        if room_tag_dict.get("'icon-cooking"):
+        if room_tag_dict.get("icon-cooking"):
             item['can_cooking'] = "T"
         else:
             item['can_cooking'] = "F"

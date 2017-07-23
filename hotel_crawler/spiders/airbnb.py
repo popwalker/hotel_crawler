@@ -20,9 +20,10 @@ class Airbnb(scrapy.Spider):
     locale = "zh"
     cdn_cn = "1"
     #api_key = "d306zoyjsyarp7ifhu67rjxn52tv0t20"
-    max_query_page = 30
+    max_query_page = 50
     api_key = "915pw2pnf4h1aiguhph5gc5b2"
     custom_settings = {'LOG_FILE': "airbnb-" + time.strftime('%Y-%m-%d', time.localtime(time.time())) + ".log"}
+    month_dict = {"一月":"01","二月":"02", "三月":"03", "四月":"04","五月":"05","六月":"06","七月":"07","八月":"08","九月":"09","十月":"10","十一月":"11","十二月":"12"}
 
     def __init__(self, start=None, end=None, city=None, *args, **kwargs):
         super(Airbnb, self).__init__(*args, **kwargs)
@@ -59,8 +60,9 @@ class Airbnb(scrapy.Spider):
                 )
 
     def format_url(self, city_cn_name, offset):
+        # &min_bedrooms=2
         url = (self.base_url + self.end_point +
-               "?checkin=%s&checkout=%s&currency=%s&locale=%s&location=%s&cdn_cn=%s&key=%s&section_offset=%s"
+               "?checkin=%s&checkout=%s&currency=%s&locale=%s&location=%s&cdn_cn=%s&key=%s&min_bedrooms=5&section_offset=%s"
                % (self.start_date, self.end_date, self.currency, self.locale, city_cn_name, self.cdn_cn, self.api_key,
                   offset)
                )
@@ -87,6 +89,7 @@ class Airbnb(scrapy.Spider):
             item['query_start_time'] = self.start_date
             item['query_end_time'] = self.end_date
             item['primary_host_id'] = listing['listing']['primary_host']['id']
+            item['host_name'] = listing['listing']['primary_host']['first_name']
             item['house_title'] = listing['listing']['name']
             item['house_type'] = listing['listing']['room_type']
 
@@ -213,7 +216,7 @@ class Airbnb(scrapy.Spider):
             if not item.get('price') and raw_price_item['type'] == 'ACCOMMODATION':
                 raw_price = re.search(r"([0-9.,]+)", raw_price_item['localized_title'])
                 if raw_price:
-                    item['price'] = float(raw_price.group(1))
+                    item['price'] = float(raw_price.group(1).replace(",", ""))
 
         yield scrapy.Request(
             url=self.format_detail_page_url(item['listing_id'], item['city_cn_name']),
@@ -242,6 +245,10 @@ class Airbnb(scrapy.Spider):
                 item['extra_guest_fee'] = 0
             # 保存次数
             item['wishlist_saved_count'] = page_listing.get('wishlisted_count_cached')
+            
+
+            member_since = page_listing['primary_host']['member_since'].split(" ")
+            item['member_since'] = member_since[1] + "-" + self.month_dict[member_since[0]]
 
             # 入住/退房情况
             space_interface = page_listing['space_interface']

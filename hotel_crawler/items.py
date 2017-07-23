@@ -48,6 +48,8 @@ class AirbnbItem(scrapy.Item):
     query_start_time = scrapy.Field()
     query_end_time = scrapy.Field()
     primary_host_id = scrapy.Field()
+    host_name = scrapy.Field()
+    member_since = scrapy.Field()
     house_title = scrapy.Field()
     listing_id = scrapy.Field()
     price = scrapy.Field()
